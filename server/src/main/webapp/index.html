@@ -1,10 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>proto</title>
+    <title>Proto</title>
+    <link rel="stylesheet" type="text/css" href="css/proto.css"/>
+    <script src="system.js"></script>
+    <script src="typescript.js"></script>
+    <script src="angular2.dev.js"></script>
+    <script src="paper-full.min.js"></script>
+    <script>
+        System.config({
+            transpiler: 'typescript',
+            typescriptOptions: { emitDecoratorMetadata: true }
+        });
+        System.import('proto.ts');
+    </script>
 </head>
 <body>
-<h1> Hello </h1>
+<div proto-app class="proto-app">loading...</div>
 </body>
 </html>
-
