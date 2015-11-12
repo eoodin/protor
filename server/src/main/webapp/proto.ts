@@ -25,6 +25,7 @@ class Tool {
     }
 }
 
+
 interface DrawDevice {
     drawRect(p1: Point, p2: Point);
     clear();
@@ -36,6 +37,7 @@ class CanvasDevice implements DrawDevice {
         this.context = canvasElement.getContext('2d');
         this.context.width = canvasElement.clientWidth;
         this.context.height = canvasElement.clientHeight;
+        this.resetSize();
     }
 
     public drawRect(p1: Point, p2: Point) {
@@ -53,6 +55,12 @@ class CanvasDevice implements DrawDevice {
 
     public clear() {
         this.context.clearRect(0, 0, this.context.width, this.context.height);
+        this.resetSize();
+    }
+
+    private resetSize(){
+        this.canvasElement.width =  this.canvasElement.clientWidth;
+        this.canvasElement.height =  this.canvasElement.clientHeight;
     }
 }
 
@@ -71,7 +79,7 @@ class RectangleFigure implements Figure {
     }
 }
 
-class Diagram implements Figure {
+class DiagramFigure implements Figure {
     private figures: Figure[];
     private device: DrawDevice;
 
@@ -86,7 +94,7 @@ class Diagram implements Figure {
     }
 
     public removeFigure(figure: Figure) {
-        for(var i = this.figures.length - 1; i--;){
+        for(var i = this.figures.length - 1; i > -1; i--){
             if (this.figures[i] === figure) {
                 this.figures.splice(i, 1);
                 break;
@@ -116,6 +124,290 @@ class Diagram implements Figure {
     }
 }
 
+interface ModelChangeListener {
+    onModelChange();
+    onChildAdded(child: Model);
+    onChildRemoved(child: Model);
+}
+
+interface Model {
+    addChangeListener(listener: ModelChangeListener);
+    removeChangeListener(lister: ModelChangeListener);
+}
+
+interface EditPart extends ModelChangeListener {
+    refresh();
+    createFigure(): Figure;
+    getModel(): Model;
+}
+
+class DiagramView {
+    constructor(private editPart: EditPart) {
+    }
+
+    public setRootFigure(figure: Figure) {
+        this.rootFigure = figure;
+    }
+
+    public setModel(model: DiagramModel) {
+        this.model = model;
+    }
+
+    public update() {
+        this.rootFigure.addFigure(this.editPart.getFigure());
+        this.editor.getDiagramFigure().invalid();
+    }
+}
+
+class BoxEditPart implements EditPart {
+    private figure: RectangleFigure;
+
+    constructor(private model: Model) {}
+
+    getModel():Model {
+        return this.model;
+    }
+    onModelChange() {
+        this.refresh();
+    }
+
+    onChildAdded(child:Model) {
+    }
+
+    onChildRemoved(child:Model) {
+    }
+
+    refresh() {
+    }
+
+    createFigure():Figure {
+        this.figure = new RectangleFigure(this.getBoxModel().getStartPoint(), this.getBoxModel().getEndPoint());
+        return this.figure;
+    }
+
+
+    private getBoxModel() : BoxModel {
+        return this.model;
+    }
+}
+
+class DiagramEditPart implements EditPart {
+    private editor: Editor;
+    private children: EditPart[];
+
+    public constructor(private model: DiagramModel) {
+        model.addChangeListener(this);
+        this.children = [];
+    }
+
+    public setEditor(e: Editor) {
+        this.editor = e;
+    }
+
+    onModelChange() {
+    }
+
+    onChildAdded(child:Model) {
+        var childEditPart: EditPart = this.createEditPart(child);
+        if (!childEditPart) {
+            alert('Error!');
+            return;
+        }
+
+        this.editor.getDiagramFigure().addFigure(childEditPart.createFigure());
+
+        this.children.push(childEditPart);
+        childEditPart.refresh();
+    }
+
+    onChildRemoved(child:Model) {
+    }
+
+    public refresh() {
+    }
+
+    createFigure():Figure {
+        console.log("Not implemented.");
+        return null;
+    }
+
+    private createEditPart(model: Model) {
+        if (model instanceof BoxModel) {
+            return new BoxEditPart(model);
+        }
+
+        return null;
+    }
+}
+
+class BaseModel implements Model {
+
+    private changeListeners: ModelChangeListener[];
+
+    public constructor() {
+        this.changeListeners = [];
+    }
+
+    addChangeListener(listener:ModelChangeListener) {
+        this.changeListeners.push(listener);
+    }
+
+    removeChangeListener(lister:ModelChangeListener) {
+        var idx = this.changeListeners.indexOf(lister);
+        if (idx != -1) {
+            this.changeListeners.splice(idx, 1);
+        }
+    }
+
+    fireModelChanged() {
+        for(var listener: ModelChangeListener of this.changeListeners ) {
+            listener.onModelChange();
+        }
+    }
+
+    fireChildAdded(child: Model) {
+        for(var listener: ModelChangeListener of this.changeListeners ) {
+            listener.onChildAdded(child);
+        }
+    }
+
+    fireChildRemoved(child: Model) {
+        for(var listener: ModelChangeListener of this.changeListeners ) {
+            listener.onChildRemoved(child);
+        }
+    }
+}
+
+class DiagramModel extends BaseModel {
+    private entities: Model[];
+
+    public constructor() {
+        super();
+        this.entities = [];
+    }
+
+    public getEntities() : Model[] {
+        return this.entities;
+    }
+
+    public addEntity(entity: Model) {
+        this.entities.push(entity);
+        this.fireChildAdded(entity);
+    }
+
+    public removeEntity(entity: Model) {
+        var idx = this.entities.indexOf(entity);
+        if (idx != -1) {
+            this.entities.splice(idx, 1);
+            this.fireChildRemoved(entity);
+        }
+    }
+}
+
+interface Command {
+    execute();
+    redo();
+    undo();
+
+    canRedo(): boolean;
+    canUndo(): boolean;
+}
+
+interface Request {
+
+}
+
+class CreateBoxRequest implements Request {
+    private startPoint;
+    private endPoint;
+
+    constructor(p1: Point, p2: Point) {
+        this.startPoint = p1;
+        this.endPoint = p2;
+    }
+
+    public getStartPoint() {
+        return this.startPoint;
+    }
+
+    public getEndPoint() {
+        return this.endPoint;
+    }
+}
+
+class BoxModel implements Model {
+    constructor(private p1: Point, private p2: Point) {
+    }
+
+    public getStartPoint(): Point {
+        return this.p1;
+    }
+
+    public getEndPoint(): Point {
+        return this.p2;
+    }
+}
+
+class CreateBoxCommand implements Command {
+    private startPoint: Point;
+    private endPoint: Point;
+    private boxModel;
+
+    constructor(private model: DiagramModel) {
+    }
+
+    public execute() {
+        this.boxModel = new BoxModel(this.startPoint, this.endPoint);
+        this.model.addEntity(this.boxModel);
+    }
+
+    public redo() {
+        this.model.addEntity(this.boxModel);
+    }
+
+    public undo() {
+        this.model.removeEntity(this.boxModel);
+    }
+
+    public canRedo():boolean {
+        return true;
+    }
+
+    public canUndo():boolean {
+        return ! typeof(this.boxModel) == 'undefined' && this.boxModel != null;
+    }
+
+    public setStartPoint(p: Point) {
+        this.startPoint = p ;
+    }
+
+    public setEndPoint(p: Point) {
+        this.endPoint = p ;
+    }
+
+}
+
+class CommandStack {
+    private commandStack;
+
+    constructor() {
+        this.commandStack = [];
+    }
+
+    public executeCommand(command: Command) {
+        command.execute();
+        this.commandStack.push(command);
+    }
+
+    public redo() {
+
+    }
+
+    public undo() {
+
+    }
+}
+
 class BoxTool extends Tool{
     private startPoint: Point;
     private feedbackFigure: RectangleFigure;
@@ -125,22 +417,36 @@ class BoxTool extends Tool{
         super(editor);
         this.name = 'Box';
         this.creatingBox = false;
+
     }
 
     public mouseDown(event) {
         this.startPoint = new Point(event.offsetX, event.offsetY);
-        this.getEditor().getDiagram().addFigure(this.getFeedbackFigure());
+        this.getEditor().getDiagramFigure().addFigure(this.getFeedbackFigure());
         this.creatingBox = true;
     }
 
     public mouseUp(event) {
-        this.getEditor().getDiagram().removeFigure(this.getFeedbackFigure());
+        this.getEditor().getDiagramFigure().removeFigure(this.getFeedbackFigure());
         this.creatingBox = false;
         this.feedbackFigure = null;
 
         var endPoint = new Point(event.offsetX, event.offsetY);
-        var rect = new RectangleFigure(this.startPoint, endPoint);
-        this.getEditor().getDiagram().addFigure(rect);
+        var request = new CreateBoxRequest(this.startPoint, endPoint);
+        var command = this.createCommand(request);
+        this.getEditor().getCommandStack().executeCommand(command);
+
+        this.getEditor().getDiagramFigure().invalid();
+    }
+
+    private createCommand(request: CreateBoxRequest) : Command {
+        var p1: Point = request.getStartPoint();
+        var p2: Point = request.getEndPoint();
+
+        var createBoxCommand = new CreateBoxCommand(this.getEditor().getModel());
+        createBoxCommand.setStartPoint(p1);
+        createBoxCommand.setEndPoint(p2);
+        return createBoxCommand;
     }
 
     public mouseMove(event){
@@ -148,7 +454,7 @@ class BoxTool extends Tool{
             this.getFeedbackFigure().p2.x = event.offsetX;
             this.getFeedbackFigure().p2.y = event.offsetY;
 
-            this.getEditor().getDiagram().invalid();
+            this.getEditor().getDiagramFigure().invalid();
         }
     }
 
@@ -165,15 +471,21 @@ class BoxTool extends Tool{
 class Editor {
     public tools: Tool[];
     public activeTool;
-    private diagram: Diagram;
-    private element: ElementRef;
+    private diagramFigure: DiagramFigure;
+    private diagramModel: DiagramModel;
+    private commandStack: CommandStack;
+    private rootEditPart: DiagramEditPart;
 
     constructor() {
         this.tools = [
             new BoxTool(this),
         ];
 
-        this.diagram = new Diagram(null);
+        this.diagramFigure = new DiagramFigure(null);
+        this.diagramModel = new DiagramModel();
+        this.commandStack = new CommandStack();
+        this.rootEditPart = new DiagramEditPart(this.diagramModel);
+        this.rootEditPart.setEditor(this);
     }
 
     public chooseTool(tool) {
@@ -182,14 +494,22 @@ class Editor {
         this.activeTool = tool;
     }
 
-    public getDiagram() {
-        return this.diagram;
+    public getDiagramFigure() {
+        return this.diagramFigure;
     }
 
     initialize(er: ElementRef):void {
         var el:any    = er['nativeElement'];
         var canvas = el.children[0];
-        this.diagram.setDevice(new CanvasDevice(canvas));
+        this.diagramFigure.setDevice(new CanvasDevice(canvas));
+    }
+
+    public getModel() : DiagramModel {
+        return this.diagramModel;
+    }
+
+    public getCommandStack() : CommandStack {
+        return this.commandStack;
     }
 }
 
@@ -229,7 +549,7 @@ class ToolStub extends Tool {
     selector: '[editor]',
     directives: [FORM_DIRECTIVES, CORE_DIRECTIVES],
     template: `
-    <canvas class="editor" (mouseup)="mouseUp($event)" (mousedown)="mouseDown($event)" (mousemove)="mouseMove($event)" height="1099" width="1783"></canvas>
+    <canvas class="editor" (mouseup)="mouseUp($event)" (mousedown)="mouseDown($event)" (mousemove)="mouseMove($event)" resize></canvas>
     `,
     styles: [`
     .editor { height: 100%; width: 100%; }
