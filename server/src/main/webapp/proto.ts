@@ -141,28 +141,10 @@ interface EditPart extends ModelChangeListener {
     getModel(): Model;
 }
 
-class DiagramView {
-    constructor(private editPart: EditPart) {
-    }
-
-    public setRootFigure(figure: Figure) {
-        this.rootFigure = figure;
-    }
-
-    public setModel(model: DiagramModel) {
-        this.model = model;
-    }
-
-    public update() {
-        this.rootFigure.addFigure(this.editPart.getFigure());
-        this.editor.getDiagramFigure().invalid();
-    }
-}
-
 class BoxEditPart implements EditPart {
     private figure: RectangleFigure;
 
-    constructor(private model: Model) {}
+    constructor(private model: BoxModel) {}
 
     getModel():Model {
         return this.model;
@@ -228,6 +210,10 @@ class DiagramEditPart implements EditPart {
 
     createFigure():Figure {
         console.log("Not implemented.");
+        return null;
+    }
+
+    getModel():Model {
         return null;
     }
 
@@ -336,6 +322,12 @@ class CreateBoxRequest implements Request {
 }
 
 class BoxModel implements Model {
+    addChangeListener(listener:ModelChangeListener) {
+    }
+
+    removeChangeListener(lister:ModelChangeListener) {
+    }
+
     constructor(private p1: Point, private p2: Point) {
     }
 
@@ -374,7 +366,7 @@ class CreateBoxCommand implements Command {
     }
 
     public canUndo():boolean {
-        return ! typeof(this.boxModel) == 'undefined' && this.boxModel != null;
+        return this.boxModel && true;
     }
 
     public setStartPoint(p: Point) {
