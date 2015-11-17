@@ -37,6 +37,10 @@ export class DiagramEditor implements Editor{
         this.activeTool = tool;
     }
 
+    public onWindowResize():void {
+        this.diagramFigure && this.diagramFigure.invalid();
+    }
+
     public getDiagramFigure() {
         return this.diagramFigure;
     }

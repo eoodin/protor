@@ -57,4 +57,5 @@ export interface Editor {
     getDiagramFigure();
     getModel() : DiagramModel;
     getCommandStack(): CommandStack;
+    onWindowResize(): void;
 }

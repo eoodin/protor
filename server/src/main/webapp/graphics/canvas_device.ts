@@ -11,17 +11,11 @@ export class CanvasDevice implements DrawDevice {
         this.resetSize();
     }
 
-    public drawRect(p1: Point, p2: Point) {
+    public drawRect(p1:Point, p2:Point) {
         this.context.beginPath();
         this.context.lineWidth = 2;
         this.context.strokeStyle = this.strokeStyle ? this.strokeStyle : '#000';
-        this.context.moveTo(p1.x, p1.y);
-        this.context.lineTo(p1.x, p2.y);
-        this.context.lineTo(p2.x, p2.y);
-        this.context.lineTo(p2.x, p1.y);
-        this.context.lineTo(p1.x, p1.y);
-        this.context.closePath();
-        this.context.stroke();
+        this.context.strokeRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
     }
 
     public setStrokeStyle(style) {
@@ -33,8 +27,8 @@ export class CanvasDevice implements DrawDevice {
         this.resetSize();
     }
 
-    private resetSize(){
-        this.canvasElement.width =  this.canvasElement.clientWidth;
-        this.canvasElement.height =  this.canvasElement.clientHeight;
+    private resetSize() {
+        this.canvasElement.width = this.canvasElement.clientWidth;
+        this.canvasElement.height = this.canvasElement.clientHeight;
     }
 }

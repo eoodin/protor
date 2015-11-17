@@ -79,6 +79,10 @@ class EditorComponent {
 })
 class Proto {
     constructor(private editor: ProtoEditor) {
+        var protoEditor = this.editor;
+        window.addEventListener('resize',  function() {
+            protoEditor.onWindowResize.call(protoEditor, arguments);
+        });
     }
 }
 
