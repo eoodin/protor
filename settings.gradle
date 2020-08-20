@@ -1,0 +1,4 @@
+rootProject.name = 'protor'
+
+include 'server'
+include 'web'
