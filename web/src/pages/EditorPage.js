@@ -1,7 +1,8 @@
 import React from 'react';
 
-import {Link, Route, Switch, useHistory, useRouteMatch} from "react-router-dom";
-import {Breadcrumb, Icon, Layout, Menu} from 'antd';
+import {useHistory, useRouteMatch} from "react-router-dom";
+import {Breadcrumb, Layout, Menu} from 'antd';
+import Icon from '@ant-design/icons';
 
 const {Content, Sider} = Layout;
 const {SubMenu} = Menu;

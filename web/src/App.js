@@ -11,7 +11,7 @@ import AdminPage from './pages/AdminPage';
 
 import {fetchProfile, userLogout} from "./store/actions/profile";
 
-const {Header, Content, Footer} = Layout;
+const {Header, Content} = Layout;
 
 class RouteApp extends Component {
 

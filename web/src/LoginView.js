@@ -1,7 +1,8 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 
-import {Button, Checkbox, Form, Icon, Input} from 'antd';
+import {Button, Checkbox, Form, Input} from 'antd';
+import Icon from '@ant-design/icons';
 
 import './LoginView.css';
 
@@ -23,7 +24,7 @@ class LoginView extends Component {
     };
 
     render() {
-        const {getFieldDecorator} = this.props.form;
+        // const {getFieldDecorator} = this.props.form;
         return (
             <div className="login-view">
                 <div>
@@ -31,33 +32,22 @@ class LoginView extends Component {
                     <h2>Please login</h2>
                 </div>
                 <Form onSubmit={this.handleSubmit} className="login-form">
-                    <Form.Item>
-                        {getFieldDecorator('username', {
-                            rules: [{required: true, message: 'Please input your username!'}],
-                        })(
-                            <Input test-data="username"
-                                prefix={<Icon type="user" style={{color: 'rgba(0,0,0,.25)'}}/>}
-                                placeholder="Username"
-                            />,
-                        )}
+                    <Form.Item label="username" name="username" rules={[{required: true, message: 'Please input your username!'}]}>
+                        <Input test-data="username"
+                               prefix={<Icon type="user" style={{color: 'rgba(0,0,0,.25)'}}/>}
+                               placeholder="Username"
+                        />
                     </Form.Item>
-                    <Form.Item>
-                        {getFieldDecorator('password', {
-                            rules: [{required: true, message: 'Please input your Password!'}],
-                        })(
-                            <Input
-                                test-data="password"
-                                prefix={<Icon type="lock" style={{color: 'rgba(0,0,0,.25)'}}/>}
-                                type="password"
-                                placeholder="Password"
-                            />,
-                        )}
+                    <Form.Item label="password" name="password" rules={[{required: true, message: 'Please input your Password!'}]}>
+                        <Input
+                            test-data="password"
+                            prefix={<Icon type="lock" style={{color: 'rgba(0,0,0,.25)'}}/>}
+                            type="password"
+                            placeholder="Password"
+                        />
                     </Form.Item>
-                    <Form.Item>
-                        {getFieldDecorator('remember', {
-                            valuePropName: 'checked',
-                            initialValue: true,
-                        })(<Checkbox>Remember me</Checkbox>)}
+                    <Form.Item label="password" name="remember">
+                        <Checkbox>Remember me</Checkbox>
                         <p />
                         <Button type="primary" htmlType="submit" className="login-form-button">
                             Log in
@@ -68,8 +58,6 @@ class LoginView extends Component {
         );
     }
 }
-
-const WrappedNormalLoginForm = Form.create({name: 'normal_login'})(LoginView);
 
 const mapStateToProps = state => ({
     profile: state.profile,
@@ -82,4 +70,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(WrappedNormalLoginForm);
+)(LoginView);
